@@ -6,7 +6,7 @@ node('generic') {
 
   stage "Build and test"
   timeout(time: 180, unit: 'MINUTES') {
-    withMavenEnv(["-Xmx1536m", "-Xms512m", "-XX:MaxPermSize=1024m"]) {
+    withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
       sh "mvn -Pdebug -U clean install -Dmaven.test.failure.ignore=true -Dconcurrency=1 -V -B -Dmaven.repo.local=${pwd()}/.repository"
     }
   }
