@@ -25,7 +25,7 @@ node('generic') {
         // The -Dmaven.repo.local=${pwd()}/.repository means that Maven will create a
         // .repository directory at the root of the build (which it gets from the
         // pwd() Workflow call) and use that for the local Maven repository.
-        sh "mvn -Pdebug -U clean install -Dmaven.test.failure.ignore=true -Dconcurrency=1 -V -B -Dmaven.repo.local=${pwd()}/.repository"
+        sh "mvn -Pdebug -U clean install -DskipTests -Dmaven.test.failure.ignore=true -Dconcurrency=1 -V -B -Dmaven.repo.local=${pwd()}/.repository"
       }
     }
 
