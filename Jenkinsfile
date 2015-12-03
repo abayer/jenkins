@@ -35,7 +35,38 @@ node('generic') {
     archive includes: "**/target/*.jar, **/target/*.war, **/target/*.hpi"
     step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
 
-    // Next step is to add RPM/Debian packaging...
+    // And stash the jenkins.war for the next step
+    stash name: "jenkins.war", includes: "war/target/jenkins.war"
+  }
+}
+
+node('pkg') {
+  // Add timestamps to logging output.
+  wrap([$class: 'TimestamperBuildWrapper']) {
+
+    stage "packaging prep"
+    git url: "git://github.com/abayer/jenkins-packaging.git", branch: "2.0-apb"
+
+    unstash "jenkins.war"
+
+    withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
+                  "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
+                  "WAR=${pwd()}/war/target/jenkins.war"]) {
+      stage "build packages"
+
+      // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
+      timeout(time: 180, unit: 'MINUTES') {
+        sh "make package BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk"
+
+        archive includes: "target/**/*"
+      }
+
+      stage "test packages"
+      // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
+      timeout(time: 180, unit: 'MINUTES') {
+        sh "make test"
+      }
+    }
   }
 }
 
