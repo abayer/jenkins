@@ -35,6 +35,7 @@ node('generic') {
     archive includes: "**/target/*.jar, **/target/*.war, **/target/*.hpi"
     step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
 
+    // Next step is to add RPM/Debian packaging...
   }
 }
 
