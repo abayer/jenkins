@@ -15,12 +15,15 @@ node('generic') {
   // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
   timeout(time: 180, unit: 'MINUTES') {
     // See below for what this method does - we're passing an arbitrary environment
-    // variable to it so that JAVA_OPTS is set correctly.
-    withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
+    // variable to it so that JAVA_OPTS and MAVEN_OPTS are set correctly.
+    withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
+                  "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
       // Actually run Maven!
       // The -Dmaven.repo.local=${pwd()}/.repository means that Maven will create a
       // .repository directory at the root of the build (which it gets from the
       // pwd() Workflow call) and use that for the local Maven repository.
+      sh 'echo ${JAVA_OPTS}'
+      sh 'echo ${MAVEN_OPTS}'
       sh "mvn -Pdebug -U clean install -Dmaven.test.failure.ignore=true -Dconcurrency=1 -V -B -Dmaven.repo.local=${pwd()}/.repository"
     }
   }
