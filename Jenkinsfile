@@ -33,7 +33,7 @@ node('generic') {
     stage "Archive artifacts and test results"
 
     archive includes: "**/target/*.jar, **/target/*.war, **/target/*.hpi"
-    step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
+//    step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
 
     // And stash the jenkins.war for the next step
     stash name: "jenkins.war", includes: "war/target/jenkins.war"
