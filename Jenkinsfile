@@ -63,7 +63,7 @@ node('pkg') {
       stage "build packages"
 
       def image = docker.image("fedora/apache")
-      image.withRun("-t -i -p 9200:80 -v /tmp/pkg.jenkins-ci.org:/var/www/html fedora/apache") {
+      image.withRun("-t -i -p 9200:80 -v /tmp/pkg.jenkins-ci.org:/var/www/html") {
         // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
         timeout(time: 30, unit: 'MINUTES') {
           // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
