@@ -60,8 +60,9 @@ node('pkg') {
     def pkgHost = "localhost"
     def pkgPort = "9200"
 
-    // Make sure we delete pkgTestDir so we start clean.
+    // Make sure we delete/recreate pkgTestDir so we start clean.
     sh "rm -rf '${pkgTestDir}'"
+    sh "mkdir -p '${pkgTestDir}'"
 
     // Same sort of environment as for the build above, but add WAR pointing to the war file.
     // Also add variables for the hostname we're ssh'ing and fetching from, and the path for the packages to be
@@ -76,11 +77,11 @@ node('pkg') {
       def image = docker.image("fedora/apache")
 
       // Make sure we're pointing 9200 to 80 on the container, and then run the makes while the container is up.
-      image.withRun("-t -i -p 9200:80 -v ${pkgTestDir}:/var/www/html") {
+      image.withRun("-t -i -p 9200:80 -v '${pkgTestDir}':/var/www/html") {
         // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
         timeout(time: 30, unit: 'MINUTES') {
           // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
-          sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk PKG_HOST=${pkgHost} PKG_TEST_DIR=${pkgTestDir} PKG_PORT=${pkgPort}"
+          sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk PKG_HOST=${pkgHost} PKG_TEST_DIR='${pkgTestDir}' PKG_PORT=${pkgPort}"
           // TODO: Make that line not so stupid long.
 
           // The packages get put in the target directory, so grab that.
