@@ -65,6 +65,7 @@ node('pkg') {
       // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
       timeout(time: 30, unit: 'MINUTES') {
         // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
+        sh "nohup make test.local.setup &"
         sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk"
 
         // The packages get put in the target directory, so grab that.
@@ -75,7 +76,7 @@ node('pkg') {
       stage "test packages"
       // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
       timeout(time: 180, unit: 'MINUTES') {
-        sh "nohup make test.local.setup &"
+
 
         sh "make test"
       }
