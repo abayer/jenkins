@@ -62,25 +62,26 @@ node('pkg') {
       // Now we start building packages.
       stage "build packages"
 
-      // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
-      timeout(time: 30, unit: 'MINUTES') {
-        // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
-        sh "make test.local.setup"
-        sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk"
+      def image = docker.image("fedora/apache")
+      image.withRun("--rm -t -i -p 9200:80 -v /tmp/pkg.jenkins-ci.org:/var/www/html fedora/apache") {
+        // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
+        timeout(time: 30, unit: 'MINUTES') {
+          // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
+          sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk"
 
-        // The packages get put in the target directory, so grab that.
-        archive includes: "target/**/*"
+          // The packages get put in the target directory, so grab that.
+          archive includes: "target/**/*"
+        }
+
+        // Tests won't work on EC2 thanks to VirtualBox not working on EC2, so gotta work on this more later.
+        stage "test packages"
+        // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
+        timeout(time: 180, unit: 'MINUTES') {
+
+
+          sh "make test"
+        }
       }
-
-      // Tests won't work on EC2 thanks to VirtualBox not working on EC2, so gotta work on this more later.
-      stage "test packages"
-      // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
-      timeout(time: 180, unit: 'MINUTES') {
-
-
-        sh "make test"
-      }
-
     }
   }
 }
