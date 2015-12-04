@@ -62,7 +62,10 @@ node('pkg') {
       // Now we start building packages.
       stage "build packages"
 
+      // Rather tha run the docker container for serving the repositories via the Makefile, run it via Workflow.
       def image = docker.image("fedora/apache")
+
+      // Make sure we're pointing 9200 to 80 on the container, and then run the makes while the container is up.
       image.withRun("-t -i -p 9200:80 -v /tmp/pkg.jenkins-ci.org:/var/www/html") {
         // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
         timeout(time: 30, unit: 'MINUTES') {
