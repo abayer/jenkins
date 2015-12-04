@@ -73,6 +73,9 @@ node('pkg') {
       // Now we start building packages.
       stage "build packages"
 
+      // Some weirdness, so a quick echo check.
+      sh 'echo PKG_HOST=${PKG_HOST}'
+      sh 'echo PKG_TEST_DIR=${PKG_TEST_DIR}'
       // Rather tha run the docker container for serving the repositories via the Makefile, run it via Workflow.
       def image = docker.image("fedora/apache")
 
