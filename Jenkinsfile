@@ -55,10 +55,21 @@ node('pkg') {
     // Grab the war file from the stash - it goes to war/target/jenkins.war
     unstash "jenkins.war"
 
+    // Set some variables for use below.
+    def pkgTestDir = "${pwd()}/pkg.jenkins-ci.org"
+    def pkgHost = "localhost"
+
+    // Make sure we delete pkgTestDir so we start clean.
+    sh "rm -rf '${pkgTestDir}'"
+
     // Same sort of environment as for the build above, but add WAR pointing to the war file.
+    // Also add variables for the hostname we're ssh'ing and fetching from, and the path for the packages to be
+    // stored in.
     withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
                   "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
-                  "WAR=${pwd()}/war/target/jenkins.war"]) {
+                  "WAR=${pwd()}/war/target/jenkins.war",
+                  "PKG_HOST=${pkgHost}",
+                  "PKG_TEST_DIR=${pkgTestDir}"]) {
       // Now we start building packages.
       stage "build packages"
 
@@ -66,7 +77,7 @@ node('pkg') {
       def image = docker.image("fedora/apache")
 
       // Make sure we're pointing 9200 to 80 on the container, and then run the makes while the container is up.
-      image.withRun("-t -i -p 9200:80 -v /tmp/pkg.jenkins-ci.org:/var/www/html") {
+      image.withRun("-t -i -p 9200:80 -v ${pkgTestDir}:/var/www/html") {
         // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
         timeout(time: 30, unit: 'MINUTES') {
           // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
