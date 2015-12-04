@@ -58,6 +58,7 @@ node('pkg') {
     // Set some variables for use below.
     def pkgTestDir = "${pwd()}/pkg.jenkins-ci.org"
     def pkgHost = "localhost"
+    def pkgPort = "9200"
 
     // Make sure we delete pkgTestDir so we start clean.
     sh "rm -rf '${pkgTestDir}'"
@@ -67,15 +68,10 @@ node('pkg') {
     // stored in.
     withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
                   "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
-                  "WAR=${pwd()}/war/target/jenkins.war",
-                  "PKG_HOST=${pkgHost}",
-                  "PKG_TEST_DIR=${pkgTestDir}"]) {
+                  "WAR=${pwd()}/war/target/jenkins.war"]) {
       // Now we start building packages.
       stage "build packages"
 
-      // Some weirdness, so a quick echo check.
-      sh 'echo PKG_HOST=${PKG_HOST}'
-      sh 'echo PKG_TEST_DIR=${PKG_TEST_DIR}'
       // Rather tha run the docker container for serving the repositories via the Makefile, run it via Workflow.
       def image = docker.image("fedora/apache")
 
@@ -84,7 +80,8 @@ node('pkg') {
         // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
         timeout(time: 30, unit: 'MINUTES') {
           // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
-          sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk"
+          sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk PKG_HOST=${pkgHost} PKG_TEST_DIR=${pkgTestDir} PKG_PORT=${pkgPort}"
+          // TODO: Make that line not so stupid long.
 
           // The packages get put in the target directory, so grab that.
           archive includes: "target/**/*"
