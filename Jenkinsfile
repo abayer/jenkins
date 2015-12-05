@@ -88,6 +88,8 @@ node('pkg') {
           archive includes: "target/**/*"
         }
 
+        /* Holding off on test execution until https://github.com/jenkinsci/packaging/pull/25 lands.
+
         // Tests won't work on EC2 thanks to VirtualBox not working on EC2, so gotta work on this more later.
         stage "test packages"
         // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
@@ -96,6 +98,7 @@ node('pkg') {
 
           sh "make test"
         }
+        */
       }
     }
   }
