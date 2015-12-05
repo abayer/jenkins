@@ -25,7 +25,7 @@ node('generic') {
         // The -Dmaven.repo.local=${pwd()}/.repository means that Maven will create a
         // .repository directory at the root of the build (which it gets from the
         // pwd() Workflow call) and use that for the local Maven repository.
-        sh "mvn -Pdebug -U clean install -Dmaven.test.failure.ignore=true -DskipTests -Dconcurrency=1 -V -B -Dmaven.repo.local=${pwd()}/.repository"
+        sh "mvn -Pdebug -U clean install -Dmaven.test.failure.ignore=true -Dconcurrency=1 -V -B -Dmaven.repo.local=${pwd()}/.repository"
       }
     }
 
@@ -33,7 +33,7 @@ node('generic') {
     stage "Archive artifacts and test results"
 
     archive includes: "**/target/*.jar, **/target/*.war, **/target/*.hpi"
-//    step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
+    step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
 
     // And stash the jenkins.war for the next step
     stash name: "jenkins.war", includes: "war/target/jenkins.war"
