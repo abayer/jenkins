@@ -1,3 +1,7 @@
+// Discarder?
+
+properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '10']]])
+
 // Generic is the label I'm using on my test setup
 node('generic') {
 
