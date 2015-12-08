@@ -1,0 +1,73 @@
+
+
+//The global script scope
+def ctx = context(scope: scriptScope())
+
+contributor(ctx) {
+    method(name: 'node', type: 'void', params: [label:'java.lang.String', body:Closure], doc: 'Allocate node')
+    method(name: 'ws', type: 'void', params: [dir:'java.lang.String', body:Closure], doc: 'Allocate workspace')
+    method(name: 'build', type: 'java.lang.Object', params: [job:'java.lang.String'], doc: 'Build a Job')
+    method(name: 'build', type: 'java.lang.Object', namedParams: [parameter(name: 'job', type: 'java.lang.String'), parameter(name: 'wait', type: 'boolean'), parameter(name: 'propagate', type: 'boolean'), parameter(name: 'parameters', type: 'java.util.List'), parameter(name: 'quietPeriod', type: 'java.lang.Integer'), ], doc: 'Build a Job')
+    method(name: 'checkpoint', type: 'void', params: [name:'java.lang.String'], doc: 'Capture the execution state so that it can be restarted later')
+    method(name: 'error', type: 'void', params: [message:'java.lang.String'], doc: 'Error')
+    method(name: 'parallel', type: 'void', params: [steps:Map], doc: 'Execute sub-workflows in parallel')
+    method(name: 'timeout', type: 'void', params: [time:'int', body:Closure], doc: 'Executes the body with a timeout')
+    method(name: 'timeout', type: 'void', params: [body:Closure], namedParams: [parameter(name: 'time', type: 'int'), parameter(name: 'unit', type: 'java.util.concurrent.TimeUnit'), ], doc: 'Executes the body with a timeout')
+    method(name: 'input', type: 'void', params: [message:'java.lang.String'], doc: 'Input')
+    method(name: 'input', type: 'void', namedParams: [parameter(name: 'message', type: 'java.lang.String'), parameter(name: 'ok', type: 'java.lang.String'), parameter(name: 'submitter', type: 'java.lang.String'), parameter(name: 'parameters', type: 'java.util.List'), parameter(name: 'id', type: 'java.lang.String'), ], doc: 'Input')
+    method(name: 'tool', type: 'java.lang.String', params: [name:'java.lang.String'], doc: 'Install a tool')
+    method(name: 'tool', type: 'java.lang.String', namedParams: [parameter(name: 'name', type: 'java.lang.String'), parameter(name: 'type', type: 'java.lang.String'), ], doc: 'Install a tool')
+    method(name: 'mail', type: 'void', namedParams: [parameter(name: 'subject', type: 'java.lang.String'), parameter(name: 'body', type: 'java.lang.String'), parameter(name: 'charset', type: 'java.lang.String'), parameter(name: 'from', type: 'java.lang.String'), parameter(name: 'to', type: 'java.lang.String'), parameter(name: 'cc', type: 'java.lang.String'), parameter(name: 'bcc', type: 'java.lang.String'), parameter(name: 'replyTo', type: 'java.lang.String'), parameter(name: 'mimeType', type: 'java.lang.String'), ], doc: 'Mail')
+    method(name: 'echo', type: 'void', params: [message:'java.lang.String'], doc: 'Print Message')
+    method(name: 'retry', type: 'void', params: [count:'int', body:Closure], doc: 'Retry the body up to N times')
+    method(name: 'sshagent', type: 'void', params: [credentials:'java.util.List', body:Closure], doc: 'SSH Agent')
+    method(name: 'sshagent', type: 'void', params: [body:Closure], namedParams: [parameter(name: 'credentials', type: 'java.util.List'), parameter(name: 'ignoreMissing', type: 'boolean'), ], doc: 'SSH Agent')
+    method(name: 'withEnv', type: 'void', params: [overrides:'java.util.List', body:Closure], doc: 'Set environment variables')
+    method(name: 'sleep', type: 'void', params: [time:'int'], doc: 'Sleep')
+    method(name: 'sleep', type: 'void', namedParams: [parameter(name: 'time', type: 'int'), parameter(name: 'unit', type: 'java.util.concurrent.TimeUnit'), ], doc: 'Sleep')
+    method(name: 'stage', type: 'void', params: [name:'java.lang.String'], doc: 'Stage')
+    method(name: 'stage', type: 'void', namedParams: [parameter(name: 'name', type: 'java.lang.String'), parameter(name: 'concurrency', type: 'java.lang.Integer'), ], doc: 'Stage')
+    method(name: 'waitUntil', type: 'void', params: [body:Closure], doc: 'Wait for condition')
+    method(name: 'catchError', type: 'void', params: [body:Closure], doc: 'Advanced/Deprecated Catch error and set build result')
+    method(name: 'dockerFingerprintRun', type: 'void', params: [containerId:'java.lang.String'], doc: 'Advanced/Deprecated Record trace of a Docker image run in a container')
+    method(name: 'dockerFingerprintRun', type: 'void', namedParams: [parameter(name: 'containerId', type: 'java.lang.String'), parameter(name: 'toolName', type: 'java.lang.String'), ], doc: 'Record trace of a Docker image run in a container')
+    property(name: 'docker', type: 'org.jenkinsci.plugins.docker.workflow.Docker')
+    property(name: 'env', type: 'org.jenkinsci.plugins.workflow.cps.EnvActionImpl')
+    property(name: 'currentBuild', type: 'org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper')
+}
+
+//Steps that require a node context
+def nodeCtx = context(scope: closureScope())
+
+contributor(nodeCtx) {
+    def call = enclosingCall('node')
+    if (call) {
+        method(name: 'archive', type: 'void', params: [includes: 'java.lang.String'], doc: 'Archive Artifacts')
+        method(name: 'archive', type: 'void', namedParams: [parameter(name: 'includes', type: 'java.lang.String'), parameter(name: 'excludes', type: 'java.lang.String'),], doc: 'Archive Artifacts')
+        method(name: 'dir', type: 'void', params: [path: 'java.lang.String', body: Closure], doc: 'Change Directory')
+        method(name: 'pwd', type: 'java.lang.String', params: [:], doc: 'Determine Current Directory')
+        method(name: 'load', type: 'void', params: [path: 'java.lang.String'], doc: 'Evaluate a Groovy source file into the workflow script')
+        method(name: 'step', type: 'void', params: [delegate: 'Map'], doc: 'General Build Step')
+        method(name: 'wrap', type: 'void', params: [delegate: 'Map', body: Closure], doc: 'General Build Wrapper')
+        method(name: 'checkout', type: 'void', params: [scm: 'Map'], doc: 'General SCM')
+        method(name: 'checkout', type: 'void', namedParams: [parameter(name: 'scm', type: 'Map'), parameter(name: 'poll', type: 'boolean'), parameter(name: 'changelog', type: 'boolean'),], doc: 'General SCM')
+        method(name: 'git', type: 'void', params: [url: 'java.lang.String'], doc: 'Git')
+        method(name: 'git', type: 'void', namedParams: [parameter(name: 'url', type: 'java.lang.String'), parameter(name: 'credentialsId', type: 'java.lang.String'), parameter(name: 'branch', type: 'java.lang.String'), parameter(name: 'poll', type: 'boolean'), parameter(name: 'changelog', type: 'boolean'),], doc: 'Git')
+        method(name: 'readFile', type: 'java.lang.String', params: [file: 'java.lang.String'], doc: 'Read file from workspace')
+        method(name: 'readFile', type: 'java.lang.String', namedParams: [parameter(name: 'file', type: 'java.lang.String'), parameter(name: 'encoding', type: 'java.lang.String'),], doc: 'Read file from workspace')
+        method(name: 'unstash', type: 'void', params: [name: 'java.lang.String'], doc: 'Restore files previously stashed')
+        method(name: 'sh', type: 'void', params: [script: 'java.lang.String'], doc: 'Shell Script')
+        method(name: 'stash', type: 'void', params: [name: 'java.lang.String'], doc: 'Stash some files to be used later in the build')
+        method(name: 'stash', type: 'void', namedParams: [parameter(name: 'name', type: 'java.lang.String'), parameter(name: 'includes', type: 'java.lang.String'), parameter(name: 'excludes', type: 'java.lang.String'),], doc: 'Stash some files to be used later in the build')
+        method(name: 'fileExists', type: 'java.lang.Boolean', params: [file: 'java.lang.String'], doc: 'Verify if file exists in workspace')
+        method(name: 'bat', type: 'void', params: [script: 'java.lang.String'], doc: 'Windows Batch Script')
+        method(name: 'writeFile', type: 'void', namedParams: [parameter(name: 'file', type: 'java.lang.String'), parameter(name: 'text', type: 'java.lang.String'), parameter(name: 'encoding', type: 'java.lang.String'),], doc: 'Write file to workspace')
+        method(name: 'unarchive', type: 'java.lang.Object', params: [:], doc: 'Advanced/Deprecated Copy archived artifacts into the workspace')
+        method(name: 'unarchive', type: 'java.lang.Object', namedParams: [parameter(name: 'mapping', type: 'java.util.Map<java.lang.String, java.lang.String>'),], doc: 'Copy archived artifacts into the workspace')
+        method(name: 'dockerFingerprintFrom', type: 'void', namedParams: [parameter(name: 'dockerfile', type: 'java.lang.String'), parameter(name: 'image', type: 'java.lang.String'), parameter(name: 'toolName', type: 'java.lang.String'),], doc: 'Record trace of a Docker image used in FROM')
+        method(name: 'withDockerContainer', type: 'void', params: [image: 'java.lang.String', body: Closure], doc: 'Advanced/Deprecated Run build steps inside a Docker container')
+        method(name: 'withDockerContainer', type: 'void', params: [body: Closure], namedParams: [parameter(name: 'image', type: 'java.lang.String'), parameter(name: 'toolName', type: 'java.lang.String'), parameter(name: 'args', type: 'java.lang.String'),], doc: 'Run build steps inside a Docker container')
+        method(name: 'withDockerRegistry', type: 'void', params: [registry: 'Map', body: Closure], doc: 'Advanced/Deprecated Sets up Docker registry endpoint')
+        method(name: 'withDockerServer', type: 'void', params: [server: 'Map', body: Closure], doc: 'Advanced/Deprecated Sets up Docker server endpoint')
+    }
+}
