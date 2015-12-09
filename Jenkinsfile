@@ -109,6 +109,28 @@ node('pkg') {
   }
 }
 
+stage "Acceptance test harness"
+
+def splits = splitTests([$class: 'CountDrivenParallelism', size: 8])
+def branches = [:]
+for (int i = 0; i < splits.size(); i++) {
+    def exclusions = splits.get(i);
+    branches["split${i}"] = {
+        node('generic') {
+            git url:'git://github.com/jenkinsci/acceptance-test-harness.git', branch:'master'
+            writeFile file: 'excludes.txt', text: exclusions.join("\n")
+            sh 'cat excludes.txt'
+            unstash "jenkins.war"
+            sh "cp war/target/jenkins.war ."
+            wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
+                sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
+            }
+            step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
+        }
+    }
+}
+parallel branches
+
 // This method sets up the Maven and JDK tools, puts them in the environment along
 // with whatever other arbitrary environment variables we passed in, and runs the
 // body we passed in within that environment.
