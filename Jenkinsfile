@@ -144,7 +144,7 @@ for (int i = 0; i < splits.size(); i++) {
 
                 // Run the selected tests within xvnc.
                 wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
-                    sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
+                    sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=4'
                 }
 
                 // And archive the test results once we're done.
