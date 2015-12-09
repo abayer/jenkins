@@ -119,7 +119,9 @@ for (int i = 0; i < splits.size(); i++) {
         node('generic') {
             withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
                           "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
-                sh "sudo apt-get -y install xvnc4viewer vnc4server"
+                sh "sudo apt-get -y install xvnc4viewer vnc4server expect"
+                writeFile file: "setupVncPasswd.sh", text: vncPasswdExpect()
+                sh "bash setupVncPasswd.sh"
                 git url: 'git://github.com/jenkinsci/acceptance-test-harness.git', branch: 'master'
                 writeFile file: 'excludes.txt', text: exclusions.join("\n")
                 sh 'cat excludes.txt'
@@ -157,4 +159,22 @@ void withMavenEnv(List envVars = [], def body) {
   withEnv(mvnEnv) {
     body.call()
   }
+}
+
+String vncPasswdExpect() {
+    return '''#!/bin/sh
+
+prog=/usr/bin/vncpasswd
+mypass="newpass"
+
+/usr/bin/expect <<EOF
+spawn "$prog"
+expect "Password:"
+send "$mypass\\r"
+expect "Verify:"
+send "$mypass\\r"
+expect eof
+exit
+EOF
+'''
 }
