@@ -43,7 +43,7 @@ node('generic') {
         if (runTests) {
             step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
         }
-        
+
         // And stash the jenkins.war for the next step
         stash name: "jenkins.war", includes: "war/target/jenkins.war"
     }
@@ -115,27 +115,46 @@ node('pkg') {
 
 stage "Acceptance test harness"
 
+// Split the tests up - currently we're splitting into 8 piles to be run concurrently.
 def splits = splitTests([$class: 'CountDrivenParallelism', size: 8])
+
+// Because of limitations in Workflow at this time, we can't just do this via something
+// like .collectEntries - we have to jump through some hoops to put together the map of names to
+// steps that we pass onward to parallel.
 def branches = [:]
 for (int i = 0; i < splits.size(); i++) {
     def exclusions = splits.get(i);
     branches["split${i}"] = {
+        // Run on the generic node for now.
         node('generic') {
+            // We need the Maven and Java environments here too.
             withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
                           "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
+                // Get the ATH source.
                 git url: 'git://github.com/jenkinsci/acceptance-test-harness.git', branch: 'master'
+
+                // Filter out the tests we don't want to run.
                 writeFile file: 'excludes.txt', text: exclusions.join("\n")
                 sh 'cat excludes.txt'
+
+                // Get the jenkins.war from above that we'll be testing against and
+                // put it in place.
                 unstash "jenkins.war"
                 sh "cp war/target/jenkins.war ."
+
+                // Run the selected tests within xvnc.
                 wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
                     sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
                 }
+
+                // And archive the test results once we're done.
                 step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
             }
         }
     }
 }
+
+// Now, actually launch 'em in parallel!
 parallel branches
 
 // This method sets up the Maven and JDK tools, puts them in the environment along
