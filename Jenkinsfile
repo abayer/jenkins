@@ -116,7 +116,7 @@ node('pkg') {
 stage "Acceptance test harness"
 
 // Split the tests up - currently we're splitting into 8 piles to be run concurrently.
-def splits = splitTests([$class: 'CountDrivenParallelism', size: 8])
+def splits = splitTests([$class: 'CountDrivenParallelism', size: 1])
 
 // Because of limitations in Workflow at this time, we can't just do this via something
 // like .collectEntries - we have to jump through some hoops to put together the map of names to
