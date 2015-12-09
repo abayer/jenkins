@@ -119,7 +119,7 @@ for (int i = 0; i < splits.size(); i++) {
         node('generic') {
             withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
                           "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
-                sh "sudo apt-get -y install xvnc4viewer vnc4server expect"
+                sh "sudo apt-get -y install xvnc4viewer vnc4server expect firefox"
                 writeFile file: "setupVncPasswd.sh", text: vncPasswdExpect()
                 sh "bash setupVncPasswd.sh"
                 git url: 'git://github.com/jenkinsci/acceptance-test-harness.git', branch: 'master'
