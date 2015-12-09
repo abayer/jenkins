@@ -117,15 +117,18 @@ for (int i = 0; i < splits.size(); i++) {
     def exclusions = splits.get(i);
     branches["split${i}"] = {
         node('generic') {
-            git url:'git://github.com/jenkinsci/acceptance-test-harness.git', branch:'master'
-            writeFile file: 'excludes.txt', text: exclusions.join("\n")
-            sh 'cat excludes.txt'
-            unstash "jenkins.war"
-            sh "cp war/target/jenkins.war ."
-            wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
-                sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
+            withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
+                          "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
+                git url: 'git://github.com/jenkinsci/acceptance-test-harness.git', branch: 'master'
+                writeFile file: 'excludes.txt', text: exclusions.join("\n")
+                sh 'cat excludes.txt'
+                unstash "jenkins.war"
+                sh "cp war/target/jenkins.war ."
+                wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
+                    sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
+                }
+                step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
             }
-            step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
         }
     }
 }
