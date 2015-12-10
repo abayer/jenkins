@@ -1,3 +1,4 @@
+#!groovy
 // TEST FLAG - to make it easier for me to turn on/off unit tests for speeding up access to later stuff.
 def runTests = true
 
