@@ -116,7 +116,7 @@ node('pkg') {
 stage "Acceptance test harness"
 
 // Split the tests up - currently we're splitting into 8 piles to be run concurrently.
-def splits = splitTests([$class: 'CountDrivenParallelism', size: 1])
+def splits = splitTests([$class: 'CountDrivenParallelism', size: 8])
 
 // Because of limitations in Workflow at this time, we can't just do this via something
 // like .collectEntries - we have to jump through some hoops to put together the map of names to
@@ -144,7 +144,7 @@ for (int i = 0; i < splits.size(); i++) {
 
                 // Run the selected tests within xvnc.
                 wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
-                    sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=4'
+                    sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
                 }
 
                 // And archive the test results once we're done.
