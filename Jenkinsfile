@@ -56,61 +56,32 @@ node('pkg') {
     wrap([$class: 'TimestamperBuildWrapper']) {
 
         // First stage here is getting prepped for packaging.
-        stage "packaging prep"
+        stage "packaging - docker prep"
 
-        // Right now, we're using my fork of jenkinsci/packaging.git, where I disable MSI/OS X and will be working on
-        // getting the Vagrant testing working in something otehr than VirtualBox.
-        git url: "git://github.com/abayer/jenkins-packaging.git", branch: "2.0-apb"
+        // Docker environment to build packagings
+        dir('packaging-docker') {
+            git branch: 'master', url: 'https://github.com/jenkinsci/packaging.git'
+            sh 'docker build -t jenkins-packaging-builder:0.1 docker'
+        }
 
-        // Grab the war file from the stash - it goes to war/target/jenkins.war
-        unstash "jenkins.war"
+        stage "packaging - actually packaging and testing"
+        // Working packaging code, separate branch with fixes
+        dir('packaging') {
+            git branch: 'master', url: 'https://github.com/jenkinsci/packaging.git'
+            // Grab the war file from the stash - it goes to war/target/jenkins.war
+            unstash "jenkins.war"
+            sh "cp war/target/jenkins.war ."
 
-        // Set some variables for use below.
-        def pkgTestDir = "${pwd()}/pkg.jenkins-ci.org"
-        def pkgHost = "localhost"
-        def pkgPort = "9200"
+            sh 'docker run --rm -v "`pwd`":/tmp/packaging -w /tmp/packaging jenkins-packaging-builder:0.1 make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war'
+        }
 
-        // Make sure we delete/recreate pkgTestDir so we start clean.
-        sh "rm -rf '${pkgTestDir}'"
-        sh "mkdir -p '${pkgTestDir}'"
-
-        // Same sort of environment as for the build above, but add WAR pointing to the war file.
-        // Also add variables for the hostname we're ssh'ing and fetching from, and the path for the packages to be
-        // stored in.
-        withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
-                      "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
-                      "WAR=${pwd()}/war/target/jenkins.war"]) {
-            // Now we start building packages.
-            stage "build packages"
-
-            // Rather tha run the docker container for serving the repositories via the Makefile, run it via Workflow.
-            def image = docker.image("fedora/apache")
-
-            // Make sure we're pointing 9200 to 80 on the container, and then run the makes while the container is up.
-            image.withRun("-t -i -p 9200:80 -v '${pkgTestDir}':/var/www/html") {
-                // We're wrapping this in a timeout - if it takes more than 30 minutes, kill it.
-                timeout(time: 30, unit: 'MINUTES') {
-                    // Build the packages via make. Builds RHEL/CentOS/Fedora RPM, Debian package, and SUSE RPM.
-                    sh "make publish BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk PKG_HOST=${pkgHost} PKG_TEST_DIR='${pkgTestDir}' PKG_PORT=${pkgPort}"
-                    // TODO: Make that line not so stupid long.
-
-                    // The packages get put in the target directory, so grab that.
-                    archive includes: "target/**/*"
-                }
-
-                /* Holding off on test execution until https://github.com/jenkinsci/packaging/pull/25 lands.
-
-                // Tests won't work on EC2 thanks to VirtualBox not working on EC2, so gotta work on this more later.
-                stage "test packages"
-                // We're wrapping this in a timeout - if it takes more than 180 minutes, kill it.
-                timeout(time: 180, unit: 'MINUTES') {
-
-
-                  sh "make test"
-                }
-                */
+        withEnv(['HOME='+pwd()]) {
+            def img = docker.image('jenkins-packaging-builder:0.1')
+            img.inside() {
+                sh 'env'
             }
         }
+
     }
 }
 
