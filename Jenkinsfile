@@ -73,6 +73,9 @@ node('pkg') {
             sh "cp war/target/jenkins.war ."
 
             sh 'docker run --rm -v "`pwd`":/tmp/packaging -w /tmp/packaging jenkins-packaging-builder:0.1 make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war'
+
+            archive includes: "packaging/target/**/*"
+
         }
 
         withEnv(['HOME='+pwd()]) {
