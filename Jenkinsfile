@@ -99,18 +99,16 @@ if (true) {
     String debfile = "artifact://${env.JOB_NAME}/72#target/debian/jenkins_2.0_all.deb"
     String rpmfile = "artifact://${env.JOB_NAME}/72#target/rpm/jenkins-2.0-1.1.noarch.rpm"
     String susefile = "artifact://${env.JOB_NAME}/72#target/suse/jenkins-2.0-1.2.noarch.rpm"
-
-    echo "debfile: ${debfile}"+rpmfile+"pants"
-
+    
 // Core tests represent the basic supported linuxes, extended tests build out coverage further
     def coreTests = []
     def extendedTests = []
-    coreTests[0] = ["sudo-ubuntu:14.04", ["sudo $scriptPath/debian.sh installers/target/debian/*.deb", checkCmd]]
-    coreTests[1] = ["sudo-centos:7", ["sudo $scriptPath/centos.sh installers/target/rpm/*.rpm", checkCmd]]
-    coreTests[2] = ["sudo-opensuse:13.2", ["sudo $scriptPath/suse.sh installers/target/suse/*.rpm", checkCmd]]
-    extendedTests[0] = ["sudo-debian:wheezy", ["sudo $scriptPath/debian.sh installers/target/debian/*.deb", checkCmd]]
-    extendedTests[1] = ["sudo-centos:6", ["sudo $scriptPath/centos.sh installers/target/rpm/*.rpm", checkCmd]]
-    extendedTests[2] = ["sudo-ubuntu:15.10", ["sudo $scriptPath/debian.sh installers/target/debian/*.deb", checkCmd]]
+    coreTests[0] = ["sudo-ubuntu:14.04", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
+    coreTests[1] = ["sudo-centos:7", ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
+    coreTests[2] = ["sudo-opensuse:13.2", ["sudo $scriptPath/suse.sh installers/suse/*.rpm", checkCmd]]
+    extendedTests[0] = ["sudo-debian:wheezy", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
+    extendedTests[1] = ["sudo-centos:6", ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
+    extendedTests[2] = ["sudo-ubuntu:15.10", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
 
     node(dockerLabel) {
         stage "Load Lib"
