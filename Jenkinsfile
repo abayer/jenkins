@@ -118,6 +118,7 @@ if (true) {
         dir('workflowlib') {
             git branch: '2.0-apb', url: 'https://github.com/abayer/jenkins-packaging.git'
             flow = load 'workflow/installertest.groovy'
+            flow.convertImageNameToString("banana", "fana")
         }
 
 
