@@ -118,7 +118,6 @@ if (true) {
         dir('workflowlib') {
             git branch: '2.0-apb', url: 'https://github.com/abayer/jenkins-packaging.git'
             flow = load 'workflow/installertest.groovy'
-            flow.convertImageNameToString("banana", "fana")
         }
 
 
@@ -138,8 +137,8 @@ if (true) {
 
         stage 'Run Installation Tests'
         String[] stepNames = ['install', 'servicecheck']
-        flow.execute_install_testset(coreTests, stepNames)
-        flow.execute_install_testset(extendedTests, stepNames)
+        flow.execute_install_testset_solo(coreTests, stepNames)
+        flow.execute_install_testset_solo(extendedTests, stepNames)
     }
 
 } else {
