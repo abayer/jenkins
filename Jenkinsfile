@@ -101,12 +101,36 @@ if (true) {
 // Core tests represent the basic supported linuxes, extended tests build out coverage further
     def coreTests = []
     def extendedTests = []
-    coreTests[0]=["sudo-ubuntu:14.04",  ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
-    coreTests[1]=["sudo-centos:6",      ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
-    coreTests[2]=["sudo-opensuse:13.2", ["sudo $scriptPath/suse.sh installers/suse/*.rpm", checkCmd]]
-    extendedTests[0]=["sudo-debian:wheezy", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
-    extendedTests[1]=["sudo-centos:7",      ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
-    extendedTests[2]=["sudo-ubuntu:15.10",  ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
+    coreTests[0]=["sudo-ubuntu:14.04",  scriptsForDistro("ubuntu-14.04", scriptPath,
+            [
+                    ["debian.sh", "installers/deb/*.deb"],
+                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
+            ])]
+    coreTests[1]=["sudo-centos:6",  scriptsForDistro("centos-6", scriptPath,
+            [
+                    ["centos.sh", "installers/rpm/*.rpm"],
+                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
+            ])]
+    coreTests[2]=["sudo-opensuse:13.2",  scriptsForDistro("opensuse-13.2", scriptPath,
+            [
+                    ["suse.sh", "installers/suse/*.rpm"],
+                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
+            ])]
+    extendedTests[0]=["sudo-debian:wheezy",  scriptsForDistro("debian-wheezy", scriptPath,
+            [
+                    ["debian.sh", "installers/deb/*.deb"],
+                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
+            ])]
+    extendedTests[1]=["sudo-centos:7",  scriptsForDistro("centos-7", scriptPath,
+            [
+                    ["centos.sh", "installers/rpm/*.rpm"],
+                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
+            ])]
+    extendedTests[2]=["sudo-ubuntu:15.10",  scriptsForDistro("ubuntu-15.10", scriptPath,
+            [
+                    ["debian.sh", "installers/deb/*.deb"],
+                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
+            ])]
 
     node(dockerLabel) {
         sh 'rm -rf workflowlib'
@@ -218,4 +242,19 @@ void withMavenEnv(List envVars = [], def body) {
     withEnv(mvnEnv) {
         body.call()
     }
+}
+
+@NonCPS
+def scriptsForDistro(String distro, String scriptPath, scriptsAndArgs) {
+    def scripts = scriptsAndArgs.collect { scriptAndArgs ->
+        shellScriptForDistro(distro, scriptPath, scriptAndArgs[0], scriptAndArgs[1])
+    }
+
+    return scripts
+}
+
+String shellScriptForDistro(String distro, String scriptPath, String baseScript, String args) {
+    String newPath = "${scriptPath}/${distro}-${baseScript}"
+    sh "cp ${scriptPath}/${baseScript} ${newPath}"
+    return "sudo ${newPath} ${args}"
 }
