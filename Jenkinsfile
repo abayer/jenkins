@@ -1,6 +1,6 @@
 #!groovy
 // TEST FLAG - to make it easier for me to turn on/off unit tests for speeding up access to later stuff.
-def runTests = true
+def runTests = false
 
 // Only keep the 10 most recent builds.
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator',
@@ -82,7 +82,7 @@ node('pkg') {
 
 stage "Package testing"
 
-if (runTests) {
+if (true) {
 // Basic parameters
     String dockerLabel = 'pkg'
 // Basic parameters
