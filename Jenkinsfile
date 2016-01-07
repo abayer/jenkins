@@ -1,6 +1,6 @@
 #!groovy
 // TEST FLAG - to make it easier for me to turn on/off unit tests for speeding up access to later stuff.
-def runTests = true
+def runTests = false
 
 // Only keep the 10 most recent builds.
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator',
@@ -82,50 +82,48 @@ node('pkg') {
 
 stage "Package testing"
 
-if (runTests) {
+if (true) {
 // Basic parameters
     String dockerLabel = 'pkg'
-    String packagingBranch = '2.0-apb'
-    String artifactname = 'jenkins'
-    String jenkinsPort = '8080'
+// Basic parameters
+    String packagingTestBranch = (binding.hasVariable('packagingTestBranch')) ? packagingTestBranch : '2.0-apb'
+    String artifactName = (binding.hasVariable('artifactName')) ? artifactName : 'jenkins'
+    String jenkinsPort = (binding.hasVariable('jenkinsPort')) ? jenkinsPort : '8080'
 
 // Set up
     String scriptPath = 'packaging-docker/installtests'
-    String checkCmd = "sudo $scriptPath/service-check.sh $artifactname $jenkinsPort"
-
-    String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/jenkins_2.0_all.deb"
-    String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/jenkins-2.0-1.1.noarch.rpm"
-    String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/jenkins-2.0-1.2.noarch.rpm"
+    String checkCmd = "sudo $scriptPath/service-check.sh $artifactName $jenkinsPort"
 
 // Core tests represent the basic supported linuxes, extended tests build out coverage further
     def coreTests = []
     def extendedTests = []
-    coreTests[0] = ["sudo-ubuntu:14.04", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
-    coreTests[1] = ["sudo-centos:7", ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
-    coreTests[2] = ["sudo-opensuse:13.2", ["sudo $scriptPath/suse.sh installers/suse/*.rpm", checkCmd]]
-    extendedTests[0] = ["sudo-debian:wheezy", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
-    extendedTests[1] = ["sudo-centos:6", ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
-    extendedTests[2] = ["sudo-ubuntu:15.10", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
+    coreTests[0]=["sudo-ubuntu:14.04",  ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
+    coreTests[1]=["sudo-centos:6",      ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
+    coreTests[2]=["sudo-opensuse:13.2", ["sudo $scriptPath/suse.sh installers/suse/*.rpm", checkCmd]]
+    extendedTests[0]=["sudo-debian:wheezy", ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
+    extendedTests[1]=["sudo-centos:7",      ["sudo $scriptPath/centos.sh installers/rpm/*.rpm", checkCmd]]
+    extendedTests[2]=["sudo-ubuntu:15.10",  ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
 
     node(dockerLabel) {
         stage "Load Lib"
         sh 'rm -rf workflowlib'
-        dir('workflowlib') {
-            git branch: '2.0-apb', url: 'https://github.com/abayer/jenkins-packaging.git'
+        dir ('workflowlib') {
+            git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
             flow = load 'workflow/installertest.groovy'
         }
 
+
         stage 'Fetch Installer'
-        flow.fetch_installers(debfile, rpmfile, susefile)
+        flow.fetchInstallers(debfile, rpmfile, susefile)
 
         sh 'rm -rf packaging-docker'
         dir('packaging-docker') {
-            git branch: packagingBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
+            git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
         }
 
         // Build the sudo dockerfiles
         stage 'Build sudo dockerfiles'
-        withEnv(['HOME=' + pwd()]) {
+        withEnv(['HOME='+pwd()]) {
             sh 'packaging-docker/docker/build-sudo-images.sh'
         }
 
