@@ -109,7 +109,6 @@ if (true) {
     extendedTests[2]=["sudo-ubuntu:15.10",  ["sudo $scriptPath/debian.sh installers/deb/*.deb", checkCmd]]
 
     node(dockerLabel) {
-        stage "Load Lib"
         sh 'rm -rf workflowlib'
         dir ('workflowlib') {
             git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
@@ -117,7 +116,6 @@ if (true) {
         }
 
 
-        stage 'Fetch Installer'
         flow.fetchInstallers(debfile, rpmfile, susefile)
 
         sh 'rm -rf packaging-docker'
@@ -126,7 +124,7 @@ if (true) {
         }
 
         // Build the sudo dockerfiles
-        stage 'Build sudo dockerfiles'
+
         withEnv(['HOME='+pwd()]) {
             sh 'packaging-docker/docker/build-sudo-images.sh'
         }
@@ -134,13 +132,13 @@ if (true) {
         String[] stepNames = ['install', 'servicecheck']
         stage 'Run Core Installation Tests'
         try {
-            flow.execute_install_testset(coreTests, stepNames)
+            flow.execute_install_testset(scriptPath, coreTests, stepNames)
         } catch (Exception e) {
             echo "Core test execution failed: ${e}"
         }
         stage 'Run Extended Installation Tests'
         try {
-            flow.execute_install_testset(extendedTests, stepNames)
+            flow.execute_install_testset(scriptPath, extendedTests, stepNames)
         } catch (Exception e) {
             echo "Extended test execution failed: ${e}"
         }
