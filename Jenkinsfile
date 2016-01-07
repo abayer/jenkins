@@ -248,10 +248,12 @@ void withMavenEnv(List envVars = [], def body) {
     }
 }
 
-@NonCPS
 def scriptsForDistro(String distro, String scriptPath, scriptsAndArgs) {
-    def scripts = scriptsAndArgs.collect { scriptAndArgs ->
-        shellScriptForDistro(distro, scriptPath, scriptAndArgs[0], scriptAndArgs[1])
+    def scripts = []
+
+    for (int i = 0; i < scriptsAndArgs.size(); i++) {
+        def scriptAndArgs = scriptsAndArgs[i]
+        scripts << shellScriptForDistro(distro, scriptPath, scriptAndArgs[0], scriptAndArgs[1])
     }
 
     return scripts
