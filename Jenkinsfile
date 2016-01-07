@@ -137,33 +137,37 @@ if (true) {
             ]]]
 
     node(dockerLabel) {
-        sh 'rm -rf workflowlib'
-        dir ('workflowlib') {
-            git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
-            flow = load 'workflow/installertest.groovy'
+        // Add timestamps to logging output.
+        wrap([$class: 'TimestamperBuildWrapper']) {
+
+            sh 'rm -rf workflowlib'
+            dir('workflowlib') {
+                git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
+                flow = load 'workflow/installertest.groovy'
+            }
+
+
+            flow.fetchInstallers(debfile, rpmfile, susefile)
+
+            sh 'rm -rf packaging-docker'
+            dir('packaging-docker') {
+                git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
+            }
+
+            // Build the sudo dockerfiles
+
+            withEnv(['HOME=' + pwd()]) {
+                sh 'packaging-docker/docker/build-sudo-images.sh'
+            }
+
+            String[] stepNames = ['install', 'servicecheck']
+
+            stage 'Run Core Installation Tests'
+            flow.execute_install_testset(scriptPath, coreTests, stepNames)
+
+            stage 'Run Extended Installation Tests'
+            flow.execute_install_testset(scriptPath, extendedTests, stepNames)
         }
-
-
-        flow.fetchInstallers(debfile, rpmfile, susefile)
-
-        sh 'rm -rf packaging-docker'
-        dir('packaging-docker') {
-            git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
-        }
-
-        // Build the sudo dockerfiles
-
-        withEnv(['HOME='+pwd()]) {
-            sh 'packaging-docker/docker/build-sudo-images.sh'
-        }
-
-        String[] stepNames = ['install', 'servicecheck']
-
-        stage 'Run Core Installation Tests'
-        flow.execute_install_testset(scriptPath, coreTests, stepNames)
-
-        stage 'Run Extended Installation Tests'
-        flow.execute_install_testset(scriptPath, extendedTests, stepNames)
     }
 
 } else {
@@ -185,28 +189,32 @@ if (runTests) {
         branches["split${i}"] = {
             // Run on the generic node for now.
             node('generic') {
-                // We need the Maven and Java environments here too.
-                withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
-                              "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
-                    // Get the ATH source.
-                    git url: 'git://github.com/jenkinsci/acceptance-test-harness.git', branch: 'master'
+                // Add timestamps to logging output.
+                wrap([$class: 'TimestamperBuildWrapper']) {
 
-                    // Filter out the tests we don't want to run.
-                    writeFile file: 'excludes.txt', text: exclusions.join("\n")
-                    sh 'cat excludes.txt'
+                    // We need the Maven and Java environments here too.
+                    withMavenEnv(["JAVA_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m",
+                                  "MAVEN_OPTS=-Xmx1536m -Xms512m -XX:MaxPermSize=1024m"]) {
+                        // Get the ATH source.
+                        git url: 'git://github.com/jenkinsci/acceptance-test-harness.git', branch: 'master'
 
-                    // Get the jenkins.war from above that we'll be testing against and
-                    // put it in place.
-                    unstash "jenkins.war"
-                    sh "cp war/target/jenkins.war ."
+                        // Filter out the tests we don't want to run.
+                        writeFile file: 'excludes.txt', text: exclusions.join("\n")
+                        sh 'cat excludes.txt'
 
-                    // Run the selected tests within xvnc.
-                    wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
-                        sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
+                        // Get the jenkins.war from above that we'll be testing against and
+                        // put it in place.
+                        unstash "jenkins.war"
+                        sh "cp war/target/jenkins.war ."
+
+                        // Run the selected tests within xvnc.
+                        wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
+                            sh 'mvn clean test -B -Dmaven.test.failure.ignore=true -DforkCount=2'
+                        }
+
+                        // And archive the test results once we're done.
+                        step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
                     }
-
-                    // And archive the test results once we're done.
-                    step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
                 }
             }
         }
