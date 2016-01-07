@@ -92,14 +92,10 @@ if (true) {
 
 // Set up
     String scriptPath = 'packaging-docker/installtests'
-    String checkCmd = "sudo $scriptPath/service-check.sh $artifactName $jenkinsPort"
 
-//    String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/jenkins_2.0_all.deb"
-//    String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/jenkins-2.0-1.1.noarch.rpm"
-//    String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/jenkins-2.0-1.2.noarch.rpm"
-    String debfile = "artifact://${env.JOB_NAME}/72#target/debian/jenkins_2.0_all.deb"
-    String rpmfile = "artifact://${env.JOB_NAME}/72#target/rpm/jenkins-2.0-1.1.noarch.rpm"
-    String susefile = "artifact://${env.JOB_NAME}/72#target/suse/jenkins-2.0-1.2.noarch.rpm"
+    String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/jenkins_2.0_all.deb"
+    String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/jenkins-2.0-1.1.noarch.rpm"
+    String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/jenkins-2.0-1.2.noarch.rpm"
 
 // Core tests represent the basic supported linuxes, extended tests build out coverage further
     def coreTests = []
