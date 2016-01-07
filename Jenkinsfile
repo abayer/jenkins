@@ -158,18 +158,12 @@ if (true) {
         }
 
         String[] stepNames = ['install', 'servicecheck']
+
         stage 'Run Core Installation Tests'
-        try {
-            flow.execute_install_testset(scriptPath, coreTests, stepNames)
-        } catch (Exception e) {
-            echo "Core test execution failed: ${e}"
-        }
+        flow.execute_install_testset(scriptPath, coreTests, stepNames)
+
         stage 'Run Extended Installation Tests'
-        try {
-            flow.execute_install_testset(scriptPath, extendedTests, stepNames)
-        } catch (Exception e) {
-            echo "Extended test execution failed: ${e}"
-        }
+        flow.execute_install_testset(scriptPath, extendedTests, stepNames)
     }
 
 } else {
