@@ -1,6 +1,6 @@
 #!groovy
 // TEST FLAG - to make it easier for me to turn on/off unit tests for speeding up access to later stuff.
-def runTests = false
+def runTests = true
 
 // Only keep the 10 most recent builds.
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator',
@@ -81,8 +81,9 @@ node('pkg') {
 }
 
 stage "Package testing"
+def pkgTestsPass = true
 
-if (true) {
+if (runTests) {
 // Basic parameters
     String dockerLabel = 'pkg'
 // Basic parameters
@@ -131,10 +132,21 @@ if (true) {
             sh 'packaging-docker/docker/build-sudo-images.sh'
         }
 
-        stage 'Run Installation Tests'
         String[] stepNames = ['install', 'servicecheck']
-        flow.execute_install_testset(coreTests, stepNames)
-        flow.execute_install_testset(extendedTests, stepNames)
+        stage 'Run Core Installation Tests'
+        try {
+            flow.execute_install_testset(coreTests, stepNames)
+        } catch (Exception e) {
+            echo "Core test execution failed: ${e}"
+            pkgTestsPass = false
+        }
+        stage 'Run Extended Installation Tests'
+        try {
+            flow.execute_install_testset(extendedTests, stepNames)
+        } catch (Exception e) {
+            echo "Extended test execution failed: ${e}"
+            pkgTestsPass = false
+        }
     }
 
 } else {
@@ -143,7 +155,7 @@ if (true) {
 
 
 stage "Acceptance test harness"
-
+def athPass = true
 if (runTests) {
 // Split the tests up - currently we're splitting into 8 piles to be run concurrently.
     def splits = splitTests([$class: 'CountDrivenParallelism', size: 8])
@@ -185,9 +197,18 @@ if (runTests) {
     }
 
 // Now, actually launch 'em in parallel!
-    parallel branches
+    try {
+        parallel branches
+    } catch (Exception e) {
+        echo "ATH failed: ${e}"
+        athPass = false
+    }
 } else {
     echo "Skipping ATH..."
+}
+
+if (!pkgTestsPass || !athPass) {
+    error("Failures in package or ATH tests.")
 }
 
 // This method sets up the Maven and JDK tools, puts them in the environment along
