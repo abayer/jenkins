@@ -7,7 +7,7 @@ properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator',
                                                           numToKeepStr: '10']]])
 
 // Generic is the label I'm using on my test setup
-node('generic') {
+node('java') {
 
     // Add timestamps to logging output.
     wrap([$class: 'TimestamperBuildWrapper']) {
@@ -51,7 +51,7 @@ node('generic') {
 }
 
 // Run the packaging build on a node with the "pkg" label.
-node('pkg') {
+node('docker') {
     // Add timestamps to logging output.
     wrap([$class: 'TimestamperBuildWrapper']) {
 
@@ -82,9 +82,9 @@ node('pkg') {
 
 stage "Package testing"
 
-if (true) {
+if (runTests) {
 // Basic parameters
-    String dockerLabel = 'pkg'
+    String dockerLabel = 'docker'
 // Basic parameters
     String packagingTestBranch = (binding.hasVariable('packagingTestBranch')) ? packagingTestBranch : '2.0-apb'
     String artifactName = (binding.hasVariable('artifactName')) ? artifactName : 'jenkins'
@@ -93,9 +93,9 @@ if (true) {
 // Set up
     String scriptPath = 'packaging-docker/installtests'
 
-    String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/jenkins_2.0_all.deb"
-    String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/jenkins-2.0-1.1.noarch.rpm"
-    String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/jenkins-2.0-1.2.noarch.rpm"
+    String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/*.deb"
+    String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/*.rpm"
+    String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/*.rpm"
 
 // Core tests represent the basic supported linuxes, extended tests build out coverage further
     def coreTests = []
