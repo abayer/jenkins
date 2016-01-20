@@ -76,12 +76,12 @@ node('docker') {
         stage "packaging - actually packaging"
         // Working packaging code, separate branch with fixes
         dir('packaging') {
-            git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
-            // Grab the war file from the stash - it goes to war/target/jenkins.war
-            unstash "jenkins.war"
-            sh "cp war/target/jenkins.war ."
-
             docker.image("jenkins-packaging-builder:0.1").inside("-w /tmp/packaging -u root") {
+                git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
+
+                sh "wget ${JENKINS_URL}/job/"
+                sh "cp war/target/jenkins.war ."
+
                 sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
 
                 dir("target/debian") {
