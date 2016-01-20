@@ -1,6 +1,6 @@
 #!groovy
 // TEST FLAG - to make it easier for me to turn on/off unit tests for speeding up access to later stuff.
-def runTests = true
+def runTests = false
 
 // Only keep the 10 most recent builds.
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator',
@@ -82,89 +82,30 @@ node('docker') {
 
 stage "Package testing"
 
-if (runTests) {
+if (true) {
 // Basic parameters
     String dockerLabel = 'docker'
 // Basic parameters
-    String packagingTestBranch = (binding.hasVariable('packagingTestBranch')) ? packagingTestBranch : '2.0-apb'
+    String packagingTestBranch = (binding.hasVariable('packagingTestBranch')) ? packagingTestBranch : 'oss-dockerized-tests'
     String artifactName = (binding.hasVariable('artifactName')) ? artifactName : 'jenkins'
     String jenkinsPort = (binding.hasVariable('jenkinsPort')) ? jenkinsPort : '8080'
 
 // Set up
-    String scriptPath = 'packaging-docker/installtests'
-
     String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/*.deb"
     String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/*.rpm"
     String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/*.rpm"
 
-// Core tests represent the basic supported linuxes, extended tests build out coverage further
-    def coreTests = []
-    def extendedTests = []
-    coreTests[0]=["sudo-ubuntu:14.04",  ["ubuntu-14.04",
-            [
-                    ["debian.sh", "installers/deb/*.deb"],
-                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
-            ]]]
-    coreTests[1]=["sudo-centos:6",  ["centos-6",
-            [
-                    ["centos.sh", "installers/rpm/*.rpm"],
-                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
-            ]]]
-    coreTests[2]=["sudo-opensuse:13.2",  ["opensuse-13.2",
-            [
-                    ["suse.sh", "installers/suse/*.rpm"],
-                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
-            ]]]
-    extendedTests[0]=["sudo-debian:wheezy",  ["debian-wheezy",
-            [
-                    ["debian.sh", "installers/deb/*.deb"],
-                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
-            ]]]
-    extendedTests[1]=["sudo-centos:7",  ["centos-7",
-            [
-                    ["centos.sh", "installers/rpm/*.rpm"],
-                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
-            ]]]
-    extendedTests[2]=["sudo-ubuntu:15.10",  ["ubuntu-15.10",
-            [
-                    ["debian.sh", "installers/deb/*.deb"],
-                    ["service-check.sh", "${artifactName} ${jenkinsPort}"]
-            ]]]
-
     node(dockerLabel) {
-        // Add timestamps to logging output.
-        wrap([$class: 'TimestamperBuildWrapper']) {
-
-            sh 'rm -rf workflowlib'
-            dir('workflowlib') {
-                git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
-                flow = load 'workflow/installertest.groovy'
-            }
-
-
-            flow.fetchInstallers(debfile, rpmfile, susefile)
-
-            sh 'rm -rf packaging-docker'
-            dir('packaging-docker') {
-                git branch: packagingTestBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
-            }
-
-            // Build the sudo dockerfiles
-
-            withEnv(['HOME=' + pwd()]) {
-                sh 'packaging-docker/docker/build-sudo-images.sh'
-            }
-
-            String[] stepNames = ['install', 'servicecheck']
-
-            stage 'Run Core Installation Tests'
-            flow.execute_install_testset(scriptPath, coreTests, stepNames)
-
-            stage 'Run Extended Installation Tests'
-            flow.execute_install_testset(scriptPath, extendedTests, stepNames)
+        stage "Load Lib"
+        sh 'rm -rf workflowlib'
+        dir ('workflowlib') {
+            git branch: packagingTestBranch, url: 'https://github.com/jenkinsci/packaging.git'
+            flow = load 'workflow/installertest.groovy'
         }
     }
-
+// Run the real tests within docker node label
+    flow.fetchAndRunJenkinsInstallerTest(dockerLabel, rpmfile, susefile, debfile,
+            packagingTestBranch, artifactName, jenkinsPort)
 } else {
     echo "Skipping package tests"
 }
