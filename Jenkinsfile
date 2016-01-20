@@ -57,7 +57,7 @@ def rpmFileName
 def suseFileName
 
 // Run the packaging build on a node with the "pkg" label.
-node('docker') {
+node('celery') {
     // Add timestamps to logging output.
     wrap([$class: 'TimestamperBuildWrapper']) {
 
@@ -86,7 +86,7 @@ node('docker') {
                     sh "which unzip"
                     sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
                 } catch (Exception e) {
-                    error "Packaging failed"
+                    error "Packaging failed: ${e}"
                 } finally {
                     sh "chmod -R a+w target || true"
                     sh "chmod a+w jenkins.war || true"
