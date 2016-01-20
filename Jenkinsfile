@@ -6,7 +6,8 @@ def runTests = false
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator',
                                                           numToKeepStr: '10']]])
 
-// Generic is the label I'm using on my test setup
+String packagingTestBranch = (binding.hasVariable('packagingTestBranch')) ? packagingTestBranch : 'oss-dockerized-tests'
+
 node('java') {
 
     // Add timestamps to logging output.
@@ -60,14 +61,14 @@ node('docker') {
 
         // Docker environment to build packagings
         dir('packaging-docker') {
-            git branch: 'master', url: 'https://github.com/jenkinsci/packaging.git'
+            git branch: packagingTestBranch, url: 'https://github.com/jenkinsci/packaging.git'
             sh 'docker build -t jenkins-packaging-builder:0.1 docker'
         }
 
         stage "packaging - actually packaging"
         // Working packaging code, separate branch with fixes
         dir('packaging') {
-            git branch: 'master', url: 'https://github.com/jenkinsci/packaging.git'
+            git branch: packagingTestBranch, url: 'https://github.com/jenkinsci/packaging.git'
             // Grab the war file from the stash - it goes to war/target/jenkins.war
             unstash "jenkins.war"
             sh "cp war/target/jenkins.war ."
@@ -86,7 +87,6 @@ if (true) {
 // Basic parameters
     String dockerLabel = 'docker'
 // Basic parameters
-    String packagingTestBranch = (binding.hasVariable('packagingTestBranch')) ? packagingTestBranch : 'oss-dockerized-tests'
     String artifactName = (binding.hasVariable('artifactName')) ? artifactName : 'jenkins'
     String jenkinsPort = (binding.hasVariable('jenkinsPort')) ? jenkinsPort : '8080'
 
