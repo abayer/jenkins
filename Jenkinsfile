@@ -74,17 +74,20 @@ node('docker') {
         // Working packaging code, separate branch with fixes
         dir('packaging') {
             deleteDir()
-            
+
             docker.image("jenkins-packaging-builder:0.1").inside() {
                 git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
 
-                sh 'echo $PATH'
                 // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
                 // So, simple wget.
                 sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
 
                 sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
 
+                catchError {
+                    sh 'for d in `ls /tmp`; do ls -la ${d}/SPECS; done'
+                    error "barf"
+                }
                 dir("target/debian") {
                     def debFilesFound = findFiles(glob: "*.deb")
                     if (debFilesFound.size() > 0) {
