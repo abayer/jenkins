@@ -82,6 +82,7 @@ node('docker') {
                 // So, simple wget.
                 sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
 
+                sh 'chown -R ${UID}:${GID} *'
                 sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
 
                 catchError {
