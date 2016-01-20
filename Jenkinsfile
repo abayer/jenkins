@@ -82,7 +82,8 @@ node('docker') {
                     // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
                     // So, simple wget.
                     sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
-
+                    sh "which unzip"
+                    sh "env"
                     sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
                 } catch (Exception e) {
                     error "Packaging failed"
