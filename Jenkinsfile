@@ -84,6 +84,7 @@ node('celery') {
                     sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
                     sh "env"
                     sh "ls -la /usr/bin"
+                    sh "sleep 300"
                     sh "/bin/bash -c which unzip"
                     sh "/bin/bash -c make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
                 } catch (Exception e) {
