@@ -76,6 +76,7 @@ node('docker') {
             docker.image("jenkins-packaging-builder:0.1").inside() {
                 git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
 
+                sh 'echo $PATH'
                 // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
                 // So, simple wget.
                 sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
