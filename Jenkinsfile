@@ -79,8 +79,7 @@ node('docker') {
             docker.image("jenkins-packaging-builder:0.1").inside("-w /tmp/packaging -u root") {
                 git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
 
-                sh "wget ${JENKINS_URL}/job/"
-                sh "cp war/target/jenkins.war ."
+                sh "wget -q ${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/artifact/war/target/jenkins.war"
 
                 sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
 
