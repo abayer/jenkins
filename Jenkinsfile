@@ -49,9 +49,6 @@ node('java') {
         if (runTests) {
             step([$class: 'JUnitResultArchiver', healthScaleFactor: 20.0, testResults: '**/target/surefire-reports/*.xml'])
         }
-
-        // And stash the jenkins.war for the next step
-        stash name: "jenkins.war", includes: "war/target/jenkins.war"
     }
 }
 
@@ -79,7 +76,8 @@ node('docker') {
             docker.image("jenkins-packaging-builder:0.1").inside("-w /tmp/packaging -u root") {
                 git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
 
-//                sh "wget -q ${env.JENKINS_URL}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/war/target/jenkins.war"
+                // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
+                // So, simple wget.
                 sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
 
                 sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
