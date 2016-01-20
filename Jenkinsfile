@@ -5,7 +5,7 @@
  */
 
 // TEST FLAG - to make it easier to turn on/off unit tests for speeding up access to later stuff.
-def runTests = true
+def runTests = false
 
 // Only keep the 10 most recent builds.
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator',
@@ -111,7 +111,7 @@ node('docker') {
 
 stage "Package testing"
 
-if (runTests) {
+if (true) {
     // NOTE: As of now, a lot of package tests will fail. See https://issues.jenkins-ci.org/issues/?filter=15257 for
     // possible open JIRAs.
 
