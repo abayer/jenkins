@@ -83,8 +83,8 @@ node('celery') {
                     // So, simple wget.
                     sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
                     sh "env"
-                    sh "which unzip"
-                    sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
+                    sh "/bin/bash -c which unzip"
+                    sh "/bin/bash -c make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
                 } catch (Exception e) {
                     error "Packaging failed: ${e}"
                 } finally {
