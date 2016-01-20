@@ -88,6 +88,7 @@ node('docker') {
                     //whatever
                 } finally {
                     sh "chmod -R a+w target"
+                    sh "chmod a+w jenkins.war"
                 }
                 dir("target/debian") {
                     def debFilesFound = findFiles(glob: "*.deb")
