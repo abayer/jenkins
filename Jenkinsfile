@@ -81,31 +81,33 @@ node('docker') {
             unstash "jenkins.war"
             sh "cp war/target/jenkins.war ."
 
-            sh 'docker run --rm -v "`pwd`":/tmp/packaging -w /tmp/packaging jenkins-packaging-builder:0.1 make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war'
+            docker.image("jenkins-packaging-builder:0.1").inside("-w /tmp/packaging -u root") {
+                sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
 
-            dir("target/debian") {
-                def debFilesFound = findFiles(glob: "*.deb")
-                if (debFilesFound.size() > 0) {
-                    debFileName = debFilesFound[0]?.name
+                dir("target/debian") {
+                    def debFilesFound = findFiles(glob: "*.deb")
+                    if (debFilesFound.size() > 0) {
+                        debFileName = debFilesFound[0]?.name
+                    }
                 }
+
+                dir("target/rpm") {
+                    def rpmFilesFound = findFiles(glob: "*.rpm")
+                    if (rpmFilesFound.size() > 0) {
+                        rpmFileName = rpmFilesFound[0]?.name
+                    }
+                }
+
+                dir("target/suse") {
+                    def suseFilesFound = findFiles(glob: "*.rpm")
+                    if (suseFilesFound.size() > 0) {
+                        suseFileName = suseFilesFound[0]?.name
+                    }
+                }
+                archive includes: "target/**/*"
             }
 
-            dir("target/rpm") {
-                def rpmFilesFound = findFiles(glob: "*.rpm")
-                if (rpmFilesFound.size() > 0) {
-                    rpmFileName = rpmFilesFound[0]?.name
-                }
-            }
-
-            dir("target/suse") {
-                def suseFilesFound = findFiles(glob: "*.rpm")
-                if (suseFilesFound.size() > 0) {
-                    suseFileName = suseFilesFound[0]?.name
-                }
-            }
-            archive includes: "target/**/*"
         }
-
     }
 }
 
