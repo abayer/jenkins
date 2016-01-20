@@ -85,7 +85,7 @@ node('docker') {
 
                     sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
                 } catch (Exception e) {
-                    //whatever
+                    error "Packaging failed"
                 } finally {
                     sh "chmod -R a+w target || true"
                     sh "chmod a+w jenkins.war || true"
