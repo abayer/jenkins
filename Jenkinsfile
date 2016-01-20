@@ -73,6 +73,8 @@ node('docker') {
         stage "packaging - actually packaging"
         // Working packaging code, separate branch with fixes
         dir('packaging') {
+            deleteDir()
+            
             docker.image("jenkins-packaging-builder:0.1").inside() {
                 git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
 
