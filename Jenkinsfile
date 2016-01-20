@@ -81,8 +81,10 @@ node('docker') {
             unstash "jenkins.war"
             sh "cp war/target/jenkins.war ."
 
-            sh 'docker run --rm -v "`pwd`":/tmp/packaging -w /tmp/packaging jenkins-packaging-builder:0.1 make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war'
-
+            docker.image('jenkins-packaging-builder:0.1').inside("-v \"`pwd`\":/tmp/packaging -w /tmp/packaging") {
+                sh 'make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war'
+            }
+            
             dir("target/debian") {
                 def debFilesFound = findFiles(glob: "*.deb")
                 if (debFilesFound.size() > 0) {
