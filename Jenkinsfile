@@ -75,19 +75,19 @@ node('docker') {
         dir('packaging') {
             deleteDir()
 
-            docker.image("jenkins-packaging-builder:0.1").inside() {
+            docker.image("jenkins-packaging-builder:0.1").inside("-u root") {
                 git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
 
-                // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
-                // So, simple wget.
-                sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
+                try {
+                    // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
+                    // So, simple wget.
+                    sh "wget -q ${currentBuild.absoluteUrl}/artifact/war/target/jenkins.war"
 
-                sh 'chown -R ${UID}:${GID} *'
-                sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
-
-                catchError {
-                    sh 'for d in `ls /tmp`; do ls -la ${d}/SPECS; done'
-                    error "barf"
+                    sh "make clean deb rpm suse BRAND=./branding/jenkins.mk BUILDENV=./env/test.mk CREDENTIAL=./credentials/test.mk WAR=jenkins.war"
+                } catch (Exception e) {
+                    //whatever
+                } finally {
+                    sh "chmod -R a+w target"
                 }
                 dir("target/debian") {
                     def debFilesFound = findFiles(glob: "*.deb")
