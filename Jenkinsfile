@@ -73,7 +73,7 @@ node('docker') {
         stage "packaging - actually packaging"
         // Working packaging code, separate branch with fixes
         dir('packaging') {
-            docker.image("jenkins-packaging-builder:0.1").inside("-w /tmp/packaging -u root") {
+            docker.image("jenkins-packaging-builder:0.1").inside() {
                 git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
 
                 // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
@@ -111,7 +111,7 @@ node('docker') {
 
 stage "Package testing"
 
-if (true) {
+if (runTests) {
     // NOTE: As of now, a lot of package tests will fail. See https://issues.jenkins-ci.org/issues/?filter=15257 for
     // possible open JIRAs.
 
