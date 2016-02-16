@@ -123,34 +123,37 @@ timestampedNode(dockerLabel) {
 
 }
 
-stage "Package testing"
+wrap([$class: 'TimestamperBuildWrapper']) {
 
-if (true) {
-    // NOTE: As of now, a lot of package tests will fail. See https://issues.jenkins-ci.org/issues/?filter=15257 for
-    // possible open JIRAs.
+    stage "Package testing"
 
-    // Basic parameters
-    String artifactName = (binding.hasVariable('artifactName')) ? artifactName : 'jenkins'
-    String jenkinsPort = (binding.hasVariable('jenkinsPort')) ? jenkinsPort : '8080'
+    if (true) {
+        // NOTE: As of now, a lot of package tests will fail. See https://issues.jenkins-ci.org/issues/?filter=15257 for
+        // possible open JIRAs.
 
-    // Set up
-    String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/${debFileName}"
-    String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/${rpmFileName}"
-    String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/${suseFileName}"
+        // Basic parameters
+        String artifactName = (binding.hasVariable('artifactName')) ? artifactName : 'jenkins'
+        String jenkinsPort = (binding.hasVariable('jenkinsPort')) ? jenkinsPort : '8080'
 
-    timestampedNode(dockerLabel) {
-        stage "Load Lib"
-        dir ('workflowlib') {
-            deleteDir()
-            git branch: packagingBranch, url: 'https://github.com/abayer/packaging.git'
-            flow = load 'workflow/installertest.groovy'
+        // Set up
+        String debfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/debian/${debFileName}"
+        String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/${rpmFileName}"
+        String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/${suseFileName}"
+
+        timestampedNode(dockerLabel) {
+            stage "Load Lib"
+            dir('workflowlib') {
+                deleteDir()
+                git branch: packagingBranch, url: 'https://github.com/abayer/packaging.git'
+                flow = load 'workflow/installertest.groovy'
+            }
         }
-    }
-    // Run the real tests within docker node label
-    flow.fetchAndRunJenkinsInstallerTest(dockerLabel, rpmfile, susefile, debfile,
+        // Run the real tests within docker node label
+        flow.fetchAndRunJenkinsInstallerTest(dockerLabel, rpmfile, susefile, debfile,
             packagingBranch, artifactName, jenkinsPort)
-} else {
-    echo "Skipping package tests"
+    } else {
+        echo "Skipping package tests"
+    }
 }
 
 // This method sets up the Maven and JDK tools, puts them in the environment along
