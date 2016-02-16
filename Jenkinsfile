@@ -56,8 +56,9 @@ def debFileName
 def rpmFileName
 def suseFileName
 
+def dockerLabel = "cabbage"
 // Run the packaging build on a node with the "docker" label.
-timestampedNode('docker') {
+timestampedNode(dockerLabel) {
     // First stage here is getting prepped for packaging.
     stage "packaging - docker prep"
 
@@ -137,7 +138,7 @@ if (true) {
     String rpmfile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/rpm/${rpmFileName}"
     String susefile = "artifact://${env.JOB_NAME}/${env.BUILD_NUMBER}#target/suse/${suseFileName}"
 
-    timestampedNode("docker") {
+    timestampedNode(dockerLabel) {
         stage "Load Lib"
         dir ('workflowlib') {
             deleteDir()
@@ -146,7 +147,7 @@ if (true) {
         }
     }
     // Run the real tests within docker node label
-    flow.fetchAndRunJenkinsInstallerTest("docker", rpmfile, susefile, debfile,
+    flow.fetchAndRunJenkinsInstallerTest(dockerLabel, rpmfile, susefile, debfile,
             packagingBranch, artifactName, jenkinsPort)
 } else {
     echo "Skipping package tests"
