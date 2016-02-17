@@ -147,11 +147,9 @@ if (true) {
             flow = load 'workflow/installertest.groovy'
         }
     }
-    wrap([$class: 'TimestamperBuildWrapper']) {
-        // Run the real tests within docker node label
-        flow.fetchAndRunJenkinsInstallerTest(dockerLabel, rpmfile, susefile, debfile,
-            packagingBranch, artifactName, jenkinsPort)
-    }
+    // Run the real tests within docker node label
+    flow.fetchAndRunJenkinsInstallerTest(dockerLabel, rpmfile, susefile, debfile,
+        packagingBranch, artifactName, jenkinsPort)
 } else {
     echo "Skipping package tests"
 }
