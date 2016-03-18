@@ -9,14 +9,14 @@
  */
 
 // TEST FLAG - to make it easier to turn on/off unit tests for speeding up access to later stuff.
-def runTests = true
+def runTests = false
 
 // Only keep the 10 most recent builds.
 properties([[$class: 'jenkins.model.BuildDiscarderProperty', strategy: [$class: 'LogRotator',
                                                                         numToKeepStr: '50',
                                                                         artifactNumToKeepStr: '20']]])
 
-String packagingBranch = (binding.hasVariable('packagingBranch')) ? packagingBranch : 'master'
+String packagingBranch = (binding.hasVariable('packagingBranch')) ? packagingBranch : 'sh2ju-quoting'
 
 timestampedNode('java') {
 
@@ -63,7 +63,7 @@ timestampedNode('docker') {
 
     // Docker environment to build packagings
     dir('packaging-docker') {
-        git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
+        git branch: packagingBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
         sh 'docker build -t jenkins-packaging-builder:0.1 docker'
     }
 
@@ -73,7 +73,7 @@ timestampedNode('docker') {
         deleteDir()
 
         docker.image("jenkins-packaging-builder:0.1").inside("-u root") {
-            git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
+            git branch: packagingBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
 
             try {
                 // Saw issues with unstashing inside a container, and not sure copy artifact plugin would work here.
@@ -124,7 +124,7 @@ timestampedNode('docker') {
 
 stage "Package testing"
 
-if (runTests) {
+if (true) {
     if (!env.BRANCH_NAME.startsWith("PR")) {
         // NOTE: As of now, a lot of package tests will fail. See https://issues.jenkins-ci.org/issues/?filter=15257 for
         // possible open JIRAs.
@@ -142,7 +142,7 @@ if (runTests) {
             stage "Load Lib"
             dir('workflowlib') {
                 deleteDir()
-                git branch: packagingBranch, url: 'https://github.com/jenkinsci/packaging.git'
+                git branch: packagingBranch, url: 'https://github.com/abayer/jenkins-packaging.git'
                 flow = load 'workflow/installertest.groovy'
             }
         }
