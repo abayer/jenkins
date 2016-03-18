@@ -125,7 +125,7 @@ timestampedNode('docker') {
 stage "Package testing"
 
 if (true) {
-    if (!env.BRANCH_NAME.startsWith("PR")) {
+    if (!env.BRANCH_NAME?.startsWith("PR")) {
         // NOTE: As of now, a lot of package tests will fail. See https://issues.jenkins-ci.org/issues/?filter=15257 for
         // possible open JIRAs.
 
