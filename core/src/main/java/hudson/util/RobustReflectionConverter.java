@@ -42,6 +42,7 @@ import com.thoughtworks.xstream.mapper.Mapper;
 import hudson.diagnosis.OldDataMonitor;
 import hudson.model.Saveable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -327,6 +328,9 @@ public class RobustReflectionConverter implements Converter {
         final SeenFields seenFields = new SeenFields();
         final boolean existingObject = context.currentObject() != null;
         final Map<FieldExpectation, Object> expectedFields = existingObject ? new HashMap<FieldExpectation, Object>() : null;
+
+        Set<String> seenFieldNames = new HashSet<>();
+
         final Object cleanInstance = existingObject ? reflectionProvider.newInstance(result.getClass()) : null;
         if (existingObject) {
             reflectionProvider.visitSerializableFields(cleanInstance, new ReflectionProvider.Visitor() {
@@ -364,6 +368,7 @@ public class RobustReflectionConverter implements Converter {
                     }
                     reflectionProvider.writeField(result, attrName, value, classDefiningField);
                     seenFields.add(classDefiningField, attrName);
+                    seenFieldNames.add(attrName);
                     if (existingObject) {
                         expectedFields.remove(new FieldExpectation(
                                 classDefiningField == null ? result.getClass() : classDefiningField, attrName));
@@ -416,6 +421,7 @@ public class RobustReflectionConverter implements Converter {
                     if (fieldExistsInClass) {
                         reflectionProvider.writeField(result, fieldName, value, classDefiningField);
                         seenFields.add(classDefiningField, fieldName);
+                        seenFieldNames.add(fieldName);
                     } else {
                         implicitCollectionsForCurrentObject = writeValueToImplicitCollection(context, value, implicitCollectionsForCurrentObject, result, fieldName);
                     }
@@ -444,8 +450,14 @@ public class RobustReflectionConverter implements Converter {
         }
         if (existingObject) {
             for (Map.Entry<FieldExpectation, Object> entry : expectedFields.entrySet()) {
-                reflectionProvider.writeField(result, entry.getKey().getName(), entry.getValue(),
-                        entry.getKey().getDefiningClass());
+                if (!seenFieldNames.contains(entry.getKey().getName())) {
+                    Field field = reflectionProvider.getField(result.getClass(), entry.getKey().getName());
+                    if (!(Modifier.isFinal(field.getModifiers())) && entry.getValue() == null) {
+                        reflectionProvider.writeField(result, entry.getKey().getName(), entry.getValue(),
+                                entry.getKey().getDefiningClass());
+                        seenFields.add(entry.getKey().getDefiningClass(), entry.getKey().getName());
+                    }
+                }
             }
         }
         return result;
